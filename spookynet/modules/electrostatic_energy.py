@@ -180,7 +180,9 @@ class ElectrostaticEnergy(nn.Module):
         if q.device.type == "cpu":  # indexing is faster on CPUs
             fac = self.kehalf * q[idx_i] * q[idx_j]
         else:  # gathering is faster on GPUs
-            fac = self.kehalf * torch.gather(q, 0, idx_i) * torch.gather(q, 0, idx_j)
+            idx_i = idx_i.long()
+            idx_j = idx_j.long()
+            fac = self.kehalf * torch.gather(q, 0, idx_i) * torch.gather(q, 0, idx_j).float()
         f = switch_function(rij, self.cuton, self.cutoff)
         if self.lr_cutoff is None:
             coulomb = 1.0 / rij

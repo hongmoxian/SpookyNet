@@ -30,7 +30,7 @@ class Attention(nn.Module):
             omega = self._omega(num_random_features, dim_qk)
         else:
             omega = []
-        self.register_buffer("omega", torch.tensor(omega, dtype=torch.float64))
+        self.register_buffer("omega", torch.tensor(omega, dtype=torch.float32))
         self.reset_parameters()
 
     def reset_parameters(self) -> None:

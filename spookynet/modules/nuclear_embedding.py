@@ -81,6 +81,7 @@ class NuclearEmbedding(nn.Module):
         if self.embedding.device.type == "cpu":  # indexing is faster on CPUs
             return self.embedding[Z]
         else:  # gathering is faster on GPUs
+            Z = Z.long()
             return torch.gather(
                 self.embedding, 0, Z.view(-1, 1).expand(-1, self.num_features)
-            )
+            ).float()

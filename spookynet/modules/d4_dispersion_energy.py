@@ -231,6 +231,7 @@ class D4DispersionEnergy(nn.Module):
             -((torch.abs(self.en[Zi] - self.en[Zj]) + self.k5) ** 2) / self.k6
         )
         tmp = den * 0.5 * (1.0 + torch.erf(-self.kn * (rij - rco) / rco))
+        tmp = tmp.to(torch.float32)
         if self.cutoff is not None:
             tmp = tmp * switch_function(rij, self.cuton, self.cutoff)
 
@@ -278,8 +279,8 @@ class D4DispersionEnergy(nn.Module):
             zetai = zeta[idx_i]
             zetaj = zeta[idx_j]
         else:  # gathering is faster on GPUs
-            zetai = torch.gather(zeta, 0, idx_i.view(-1, 1).expand(-1, zeta.size(1)))
-            zetaj = torch.gather(zeta, 0, idx_j.view(-1, 1).expand(-1, zeta.size(1)))
+            zetai = torch.gather(zeta, 0, idx_i.view(-1, 1).expand(-1, zeta.size(1)).long()).float()
+            zetaj = torch.gather(zeta, 0, idx_j.view(-1, 1).expand(-1, zeta.size(1)).long()).float()
         refc6ij = self.refc6[Zi, Zj, :, :]
         zetaij = zetai.view(zetai.size(0), zetai.size(1), 1) * zetaj.view(
             zetaj.size(0), 1, zetaj.size(1)
@@ -312,6 +313,7 @@ class D4DispersionEnergy(nn.Module):
         s6 = F.softplus(self._s6)
         s8 = F.softplus(self._s8)
         pairwise = -c6ij * (s6 * oor6 + s8 * sqrt_r4r2ij ** 2 * oor8) * self.convert2eV
+        pairwise = pairwise.to(torch.float32)
         edisp = rij.new_zeros(N).index_add_(0, idx_i, pairwise)
         if compute_atomic_quantities:
             alpha = self.alpha[Z, :, 0]

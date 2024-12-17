@@ -88,13 +88,14 @@ class ElectronicEmbedding(nn.Module):
         else:
             e = torch.abs(E).unsqueeze(-1)  # +/- spin is the same => abs
         enorm = torch.maximum(e, torch.ones_like(e))
-        k = self.linear_k(e / enorm)[batch_seg]  # keys
-        v = self.linear_v(e)[batch_seg]  # values
+        k = self.linear_k(e / enorm) # keys
+        v = self.linear_v(e)  # values
         dot = torch.sum(k * q, dim=-1) / k.shape[-1] ** 0.5  # scaled dot product
         a = nn.functional.softplus(dot)  # unnormalized attention weights
         anorm = a.new_zeros(num_batch).index_add_(0, batch_seg, a)
         if a.device.type == "cpu":  # indexing is faster on CPUs
             anorm = anorm[batch_seg]
         else:  # gathering is faster on GPUs
-            anorm = torch.gather(anorm, 0, batch_seg)
+            batch_seg = batch_seg.long()
+            anorm = torch.gather(anorm, 0, batch_seg).float()
         return self.resblock((a / (anorm + eps)).unsqueeze(-1) * v)

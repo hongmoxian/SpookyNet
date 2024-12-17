@@ -102,10 +102,10 @@ class LocalInteraction(nn.Module):
             xp = xp[idx_j]  # L=1
             xd = xd[idx_j]  # L=2
         else:  # gathering is faster on GPUs
-            j = idx_j.view(-1, 1).expand(-1, x.shape[-1])  # index for gathering
-            xs = torch.gather(xs, 0, j)  # L=0
-            xp = torch.gather(xp, 0, j)  # L=1
-            xd = torch.gather(xd, 0, j)  # L=2
+            j = idx_j.view(-1, 1).expand(-1, x.shape[-1]).long()  # index for gathering
+            xs = torch.gather(xs, 0, j).float()  # L=0
+            xp = torch.gather(xp, 0, j).float()  # L=1
+            xd = torch.gather(xd, 0, j).float()  # L=2
         # sum over neighbors
         pp = x.new_zeros(x.shape[0], pij.shape[-1], x.shape[-1])
         dd = x.new_zeros(x.shape[0], dij.shape[-1], x.shape[-1])

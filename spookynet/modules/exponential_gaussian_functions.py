@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from ..functional import softplus_inverse
+from spookynet.functional import softplus_inverse
 
 
 class ExponentialGaussianFunctions(nn.Module):

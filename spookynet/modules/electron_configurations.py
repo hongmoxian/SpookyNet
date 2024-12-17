@@ -91,7 +91,7 @@ electron_config = np.array([
   [ 84, 2, 2, 6, 2, 6, 2, 10, 6, 2, 10, 6, 2, 14, 10, 4, 2, 4, 10, 14], # Po
   [ 85, 2, 2, 6, 2, 6, 2, 10, 6, 2, 10, 6, 2, 14, 10, 5, 2, 5, 10, 14], # At
   [ 86, 2, 2, 6, 2, 6, 2, 10, 6, 2, 10, 6, 2, 14, 10, 6, 2, 6, 10, 14]  # Rn
-], dtype=np.float64)
+], dtype=np.float32)
 # fmt: on
 # normalize entries (between 0.0 and 1.0)
 electron_config = electron_config / np.max(electron_config, axis=0)

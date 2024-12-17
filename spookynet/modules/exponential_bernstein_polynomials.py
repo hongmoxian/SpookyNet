@@ -58,11 +58,11 @@ class ExponentialBernsteinPolynomials(nn.Module):
             n = n[:-1]
             logbinomial = logbinomial[:-1]
         # register buffers and parameters
-        self.register_buffer("logc", torch.tensor(logbinomial, dtype=torch.float64))
-        self.register_buffer("n", torch.tensor(n, dtype=torch.float64))
-        self.register_buffer("v", torch.tensor(v, dtype=torch.float64))
+        self.register_buffer("logc", torch.tensor(logbinomial, dtype=torch.float32))
+        self.register_buffer("n", torch.tensor(n, dtype=torch.float32))
+        self.register_buffer("v", torch.tensor(v, dtype=torch.float32))
         self.register_parameter(
-            "_alpha", nn.Parameter(torch.tensor(1.0, dtype=torch.float64))
+            "_alpha", nn.Parameter(torch.tensor(1.0, dtype=torch.float32))
         )
         self.reset_parameters()
 

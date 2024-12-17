@@ -1,8 +1,8 @@
 import math
 import torch
 import torch.nn as nn
-from .functional import cutoff_function
-from .modules import *
+from spookynet.functional import cutoff_function
+from spookynet.modules import *
 from typing import Tuple, Optional
 
 # backwards compatibility with old versions of pytorch
@@ -564,10 +564,14 @@ class SpookyNet(nn.Module):
             Ri = R[idx_i]
             Rj = R[idx_j]
         else:  # gathering is faster on GPUs
+            idx_i = idx_i.long()
+            idx_j = idx_j.long()
             Ri = torch.gather(R, 0, idx_i.view(-1, 1).expand(-1, 3))
             Rj = torch.gather(R, 0, idx_j.view(-1, 1).expand(-1, 3))
+            Ri = Ri.float()
+            Rj = Rj.float()
         if (
-            cell is not None and cell_offsets is not None and batch_seg is not None
+            any(cell) and cell_offsets and batch_seg is not None
         ):  # apply PBCs
             if cell.device.type == "cpu":  # indexing is faster on CPUs
                 cells = cell[batch_seg][idx_i]
@@ -753,8 +757,8 @@ class SpookyNet(nn.Module):
             out = self.output(f) + torch.gather(
                 self.element_bias,
                 0,
-                Z.view(-1, 1).expand(-1, self.element_bias.shape[-1]),
-            )
+                Z.view(-1, 1).expand(-1, self.element_bias.shape[-1]).long(),
+            ).float()
         ea = out.narrow(-1, 0, 1).squeeze(-1)  # atomic energy
         qa = out.narrow(-1, 1, 1).squeeze(-1)  # partial charge
 
@@ -767,7 +771,8 @@ class SpookyNet(nn.Module):
             w = w / wnorm[batch_seg]
             qa = qa + w * Qleftover[batch_seg]
         else:  # gathering is faster on GPUs
-            w = w / torch.gather(wnorm, 0, batch_seg)
+            batch_seg = batch_seg.long()
+            w = w / torch.gather(wnorm, 0, batch_seg).float()
             qa = qa + w * torch.gather(Qleftover, 0, batch_seg)
 
         # compute ZBL inspired short-range repulsive contributions
@@ -1048,15 +1053,11 @@ class SpookyNet(nn.Module):
             num_batch=num_batch,
             batch_seg=batch_seg,
         )
-        if idx_i.numel() > 0:  # autograd will fail if there are no distances
-            grad = torch.autograd.grad(
-                [torch.sum(energy)], [R], create_graph=create_graph
+        if idx_i.numel() > 0:
+            forces = -torch.autograd.grad(
+                energy.sum(), R, create_graph=create_graph, retain_graph=True,
             )[0]
-            if grad is not None:  # necessary for torch.jit compatibility
-                forces = -grad
-            else:
-                forces = torch.zeros_like(R)
-        else:  # if there are no distances, the forces are zero
+        else:
             forces = torch.zeros_like(R)
         return (energy, forces, f, ea, qa, ea_rep, ea_ele, ea_vdw, pa, c6)
 
